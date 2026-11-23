@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<title>NO LIMIT COMPETITION</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#e6fbe9;--mute:#86b394;--g:#19e65a;--g2:#0d9a3c;--line:rgba(25,230,90,.3);--wash:rgba(25,230,90,.08);--warn:#ff7a7a;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#000;color:var(--ink);font:400 1rem/1.5 "Archivo","Helvetica Neue",Helvetica,Arial,sans-serif}
+.strip{height:8px;background:var(--g)}
+main{max-width:860px;margin:0 auto;padding:36px 18px 56px}
+h1{margin:0;color:var(--g);font-weight:900;font-stretch:125%;font-size:clamp(2rem,8vw,4.6rem);line-height:.93;letter-spacing:-.015em}
+.lede{max-width:34ch;margin:18px 0 26px;font-size:1.15rem;color:var(--ink)}
+button{font-family:inherit}
+.enter{display:block;width:min(100%,420px);min-height:68px;padding:0 24px;border:3px solid var(--g);background:var(--g);color:#000;font-weight:900;font-stretch:125%;font-size:1.35rem;text-align:left;cursor:pointer;transition:background .15s,color .15s}
+.enter:hover:not(:disabled){background:#000;color:var(--g)}
+.enter:disabled{opacity:.45;cursor:default}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
+#msg{min-height:1.5em;margin:18px 0 0;color:var(--g);font-weight:600}
+.rosterhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:34px;padding-bottom:10px;border-bottom:2px solid var(--g)}
+h2{margin:0;font-size:1.5rem;font-weight:800;font-stretch:112%}
+#count{color:var(--mute)}
+ul{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:1fr auto;gap:6px 14px;padding:20px 12px 20px 0;border-bottom:1px solid var(--line)}
+.row.you{background:var(--wash);padding-left:14px;border-left:4px solid var(--g)}
+.row.fresh{animation:flash 1.8s ease-out}
+@keyframes flash{from{background:rgba(25,230,90,.5)}to{background:var(--wash)}}
+.name{font-size:1.55rem;font-weight:800;font-stretch:112%;line-height:1.15;overflow-wrap:anywhere}
+.badge{display:inline-block;margin-left:10px;padding:1px 9px;background:var(--g);color:#000;font-size:.8rem;font-weight:800;vertical-align:middle}
+.msg{grid-column:1;margin:4px 0 0;padding-left:12px;border-left:3px solid var(--g2);color:var(--mute);overflow-wrap:anywhere;white-space:pre-line}
+.rm{grid-column:2;grid-row:1;align-self:start;padding:6px 12px;border:1px solid var(--warn);background:transparent;color:var(--warn);cursor:pointer}
+.empty{padding:34px 0;color:var(--mute);font-size:1.1rem}
+.owner{margin-top:18px;padding:8px 12px;border:1px solid var(--g);color:var(--g);font-size:.9rem}
+footer{margin-top:44px}
+.link{background:none;border:0;padding:0;color:var(--mute);font-size:.85rem;text-decoration:underline;cursor:pointer}
+dialog{width:min(480px,92vw);padding:26px;border:2px solid var(--g);border-radius:0;background:#000;color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.82)}
+dialog h3{margin:0 0 6px;color:var(--g);font-size:1.6rem;font-weight:900;font-stretch:120%;line-height:1.05}
+dialog p{margin:0 0 16px;color:var(--mute)}
+label{display:block;margin:14px 0 6px;font-weight:700}
+input,textarea{width:100%;padding:12px;border:2px solid var(--line);border-radius:0;background:#000;color:var(--ink);font:inherit}
+input:focus,textarea:focus{border-color:var(--g);outline:none}
+textarea{min-height:110px;resize:vertical}
+.hint{display:flex;justify-content:space-between;margin-top:4px;color:var(--mute);font-size:.85rem}
+.err{min-height:1.4em;margin-top:10px;color:var(--warn);font-size:.9rem}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
+.b{min-height:46px;padding:0 18px;border:2px solid var(--line);background:#000;color:var(--ink);font-weight:700;cursor:pointer}
+.b.go{border-color:var(--g);background:var(--g);color:#000}
+.b.go:hover{background:#000;color:var(--g)}
+.b.del{border-color:var(--warn);color:var(--warn);margin-right:auto}
+@media (prefers-reduced-motion:reduce){.row.fresh{animation:none}.enter{transition:none}}
+</style>
+</head>
+<body>
+<div class="strip"></div>
+<main>
+  <header>
+    <h1>NO LIMIT<br>COMPETITION</h1>
+    <p class="lede">Put your name on the list and leave a message for the people you’ll be up against.</p>
+    <button class="enter" id="enter" disabled>Enter Competition</button>
+  </header>
+  <div id="msg" role="status" aria-live="polite"></div>
+  <div class="owner" id="ownerBar" hidden>Owner mode: you can remove any entry.</div>
+  <div class="rosterhead"><h2>Who’s in</h2><span id="count"></span></div>
+  <ul id="list"></ul>
+  <footer><button class="link" id="adminLink">Owner login</button></footer>
+</main>
+
+<dialog id="dlg">
+  <form id="form" autocomplete="off">
+    <h3 id="dt">Enter the competition</h3>
+    <p>Add your name, then leave a message for your opponents.</p>
+    <label for="name">Your name</label>
+    <input id="name" maxlength="30" required>
+    <label for="note">Message for your opponents</label>
+    <textarea id="note" maxlength="200" required></textarea>
+    <div class="hint"><span>Everyone on this page can read it.</span><span id="left">200</span></div>
+    <div class="err" id="err" role="alert"></div>
+    <div class="actions" id="acts"></div>
+  </form>
+</dialog>
+
+<dialog id="login">
+  <h3>Owner login</h3>
+  <label for="em">Email</label>
+  <input type="email" id="em" autocomplete="username">
+  <label for="pw">Password</label>
+  <input type="password" id="pw" autocomplete="current-password">
+  <div class="err" id="lerr" role="alert"></div>
+  <div class="actions">
+    <button class="b" id="lcancel" type="button">Cancel</button>
+    <button class="b go" id="lgo" type="button">Log in</button>
+  </div>
+</dialog>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDXnEQN6uxqQwQjHdu5lCtbcYZeZ8Yuw1E",
+  authDomain: "che-mep-firebase.firebaseapp.com",
+  projectId: "che-mep-firebase",
+  storageBucket: "che-mep-firebase.firebasestorage.app",
+  messagingSenderId: "876526821768",
+  appId: "1:876526821768:web:a86534726cf914ea85da3d",
+  measurementId: "G-0REHXBYMPC"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const entries = {};
+let me = null, isAdmin = false, ready = false, loaded = false, flashId = null, msgTimer = null;
+
+function say(t) {
+  $('msg').textContent = t || '';
+  clearTimeout(msgTimer);
+  if (t) msgTimer = setTimeout(() => { $('msg').textContent = ''; }, 6000);
+}
+
+function render() {
+  const mine = me && entries[me.uid];
+  $('enter').disabled = !ready;
+  $('enter').textContent = mine ? 'Edit my entry' : 'Enter Competition';
+  $('ownerBar').hidden = !isAdmin;
+  $('adminLink').textContent = isAdmin ? 'Log out of owner mode' : 'Owner login';
+
+  const ids = Object.keys(entries).sort((a, b) => entries[b].t - entries[a].t);
+  $('count').textContent = loaded ? (ids.length === 1 ? '1 entered' : ids.length + ' entered') : 'Loading…';
+
+  const list = $('list'); list.innerHTML = '';
+  if (loaded && !ids.length) {
+    const li = document.createElement('li'); li.className = 'empty';
+    li.textContent = 'No one has entered yet. Be the first to put your name on the list.';
+    list.appendChild(li);
+  }
+  ids.forEach(id => {
+    const e = entries[id], isMe = !!(me && id === me.uid);
+    const li = document.createElement('li');
+    li.className = 'row' + (isMe ? ' you' : '') + (id === flashId ? ' fresh' : '');
+    const nm = document.createElement('div'); nm.className = 'name'; nm.textContent = e.name;
+    if (isMe) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'You'; nm.appendChild(b); }
+    const p = document.createElement('p'); p.className = 'msg'; p.textContent = e.message;
+    li.append(nm, p);
+    if (isAdmin) {
+      const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = 'Remove';
+      rm.onclick = async () => {
+        if (!confirm('Remove ' + e.name + ' from the competition?')) return;
+        try { await deleteDoc(doc(db, 'entrants', id)); } catch (err) { console.error(err); say('Couldn’t remove that entry. Check your Firebase rules.'); }
+      };
+      li.appendChild(rm);
+    }
+    list.appendChild(li);
+  });
+  flashId = null;
+}
+
+// ---- Enter / edit dialog ----
+function btn(label, cls, type, fn) {
+  const b = document.createElement('button'); b.className = 'b ' + (cls || ''); b.type = type; b.textContent = label;
+  if (fn) b.onclick = fn; $('acts').appendChild(b);
+}
+function countLeft() { $('left').textContent = 200 - $('note').value.length; }
+$('note').addEventListener('input', countLeft);
+
+$('enter').onclick = () => {
+  const mine = me && entries[me.uid];
+  $('dt').textContent = mine ? 'Edit your entry' : 'Enter the competition';
+  $('name').value = mine ? mine.name : '';
+  $('note').value = mine ? mine.message : '';
+  $('err').textContent = '';
+  $('acts').innerHTML = '';
+  btn('Cancel', '', 'button', () => $('dlg').close());
+  if (mine) btn('Withdraw', 'del', 'button', withdraw);
+  btn(mine ? 'Save changes' : 'Enter Competition', 'go', 'submit');
+  countLeft();
+  $('dlg').showModal();
+  setTimeout(() => $('name').focus(), 50);
+};
+
+$('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = $('name').value.trim(), message = $('note').value.trim();
+  if (!name || !message) { $('err').textContent = 'Add your name and a message for your opponents.'; return; }
+  const mine = me && entries[me.uid];
+  try {
+    const ref = doc(db, 'entrants', me.uid);
+    if (mine) await updateDoc(ref, { name, message });
+    else await setDoc(ref, { name, message, createdAt: serverTimestamp() });
+    flashId = me.uid;
+    $('dlg').close();
+    say(mine ? 'Entry updated.' : 'You’re in. Good luck.');
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    console.error(err);
+    $('err').textContent = 'Couldn’t save your entry. Check your connection and try again.';
+  }
+});
+
+async function withdraw() {
+  if (!confirm('Withdraw from the competition? Your name and message will be removed.')) return;
+  try { await deleteDoc(doc(db, 'entrants', me.uid)); $('dlg').close(); say('You’ve withdrawn.'); }
+  catch (err) { console.error(err); $('err').textContent = 'Couldn’t withdraw. Try again.'; }
+}
+
+// ---- Owner login ----
+$('adminLink').onclick = async () => {
+  if (isAdmin) { await signOut(auth); return; }
+  $('lerr').textContent = ''; $('login').showModal();
+};
+$('lcancel').onclick = () => $('login').close();
+$('lgo').onclick = async () => {
+  try { await signInWithEmailAndPassword(auth, $('em').value.trim(), $('pw').value); $('pw').value = ''; $('login').close(); }
+  catch (e) { $('lerr').textContent = 'Wrong email or password.'; }
+};
+
+// ---- Auth + live data ----
+onAuthStateChanged(auth, async u => {
+  if (!u) { try { await signInAnonymously(auth); } catch (e) { say('Couldn’t connect. Check the Firebase setup.'); } return; }
+  me = u; isAdmin = !u.isAnonymous; ready = true; render();
+});
+
+onSnapshot(collection(db, 'entrants'), snap => {
+  for (const k in entries) delete entries[k];
+  snap.forEach(d => {
+    const x = d.data({ serverTimestamps: 'estimate' });
+    entries[d.id] = { name: x.name, message: x.message, t: x.createdAt && x.createdAt.toMillis ? x.createdAt.toMillis() : Date.now() };
+  });
+  loaded = true; render();
+}, e => { console.error(e); loaded = true; say('Couldn’t load the list. Check your Firebase config and rules.'); render(); });
+
+render();
+</script>
+</body>
+</html>
